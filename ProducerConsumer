@@ -1,0 +1,79 @@
+class Resource{
+	private String name;
+	private int count = 1;
+	private boolean flag = false;
+	Lock lock = new ReentrantLock();//ReentrantLock是Lock的一个实现类
+	Condition condition_pro = lock.newCondition();//newConditioin是Lock接口里面一个返回到此Lock实例的新Condition实例，用来调用Condition里面的await和signal方法
+	Condition condition_con = lock.newCondition();
+	public void in(String name)throws InterruptedException {
+		lock.lock();
+		try {
+			while(flag)
+				condition_pro.await();
+		    this.name = name+"---"+count++;
+		    System.out.println(Thread.currentThread().getName()+"....生产者..."+this.name);
+		    flag = true;
+		    condition_con.signal();
+		}
+		finally {
+			lock.unlock();
+		}
+	}
+	public void out()throws InterruptedException{
+		lock.lock();
+		try {
+			
+			while(!flag)
+				condition_con.await();
+			System.out.println(Thread.currentThread().getName()+"....消费者..."+this.name);
+			flag= false;
+			condition_pro.signal();
+		}
+		finally {
+			lock.unlock();
+		}
+		
+	}
+	
+	
+}
+
+
+class Producer implements Runnable{
+	private Resource res;
+	Producer(Resource res){
+		this.res = res;
+	}
+	
+	public void run() {
+		
+		while(true) {
+			try {
+				res.in("++商品++");
+			}
+			catch(InterruptedException e) {
+				
+			}
+		}
+	}
+	
+}
+
+class Consumers implements Runnable{
+	private Resource res;
+	Consumers(Resource res){
+		this.res = res;
+	}
+	
+	public void run() {
+		
+		while(true) {
+			try {
+				res.out();
+			}
+			catch(InterruptedException e) {
+				
+			}
+		}
+	}
+}
