@@ -1,3 +1,23 @@
+package 生产者消费者;
+import java.util.concurrent.locks.*;
+
+public class ProducerConsumer {
+	public static void main(String[] args) {
+		Resource r = new Resource();
+	Producer pro = new Producer(r);
+	Consumers con = new Consumers(r);
+	Thread t1 = new Thread(pro);
+	Thread t2 = new Thread(con);
+	t1.start();
+	t2.start();
+
+	}
+	
+}
+
+
+
+//定义一个资源类
 class Resource{
 	private String name;
 	private int count = 1;
@@ -9,12 +29,13 @@ class Resource{
 		lock.lock();
 		try {
 			while(flag)
-				condition_pro.await();
+				condition_pro.await();//标记为真时阻塞生产者线程
 		    this.name = name+"---"+count++;
 		    System.out.println(Thread.currentThread().getName()+"....生产者..."+this.name);
-		    flag = true;
-		    condition_con.signal();
+		    flag = true;//放入产品后将标记置位真
+		    condition_con.signal();//唤醒消费者线程
 		}
+		//发生异常时必须要执行的代码
 		finally {
 			lock.unlock();
 		}
@@ -24,10 +45,10 @@ class Resource{
 		try {
 			
 			while(!flag)
-				condition_con.await();
+				condition_con.await();//标记为假时阻塞消费者进程
 			System.out.println(Thread.currentThread().getName()+"....消费者..."+this.name);
-			flag= false;
-			condition_pro.signal();
+			flag= false;//消费产品后将标记置位假
+			condition_pro.signal();//唤醒生产者线程
 		}
 		finally {
 			lock.unlock();
@@ -38,13 +59,14 @@ class Resource{
 	
 }
 
-
+//定义一个实现Runnable接口的生产者线程
 class Producer implements Runnable{
-	private Resource res;
+	private Resource res;//建立Resource实例对象的引用，确保生产者线程与消费者线程操作的是同一个资源
 	Producer(Resource res){
 		this.res = res;
 	}
 	
+	//覆盖Runnable中的run方法
 	public void run() {
 		
 		while(true) {
@@ -59,6 +81,7 @@ class Producer implements Runnable{
 	
 }
 
+//定义一个实现Runnable接口的消费者线程
 class Consumers implements Runnable{
 	private Resource res;
 	Consumers(Resource res){
@@ -77,3 +100,4 @@ class Consumers implements Runnable{
 		}
 	}
 }
+
